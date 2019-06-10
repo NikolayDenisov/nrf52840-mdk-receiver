@@ -1,6 +1,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include "nrf52840.h"
 #include "nrf52840_bitfields.h"
 #include "nrf_delay.h"
@@ -35,29 +36,33 @@ void UART_init(void) {
     NRF_UART0->PSEL.TXD = (1 << 20);
     NRF_UART0->PSEL.CTS = 0xFFFFFFFF;
     NRF_UART0->PSEL.RTS = 0xFFFFFFFF;
-    NRF_UART0->BAUDRATE = UART_BAUDRATE_BAUDRATE_Baud115200 ;
-    NRF_UART0->CONFIG = UART_CONFIG_HWFC_Msk;
-    NRF_UART0->ENABLE = UART_ENABLE_ENABLE_Enabled;
-    NRF_UART0->CONFIG |= UART_CONFIG_PARITY_Msk;
+    NRF_UART0->BAUDRATE = (UART_BAUDRATE_BAUDRATE_Baud115200 << UART_BAUDRATE_BAUDRATE_Pos);
+    NRF_UART0->CONFIG = (UART_CONFIG_HWFC_Msk << UART_CONFIG_HWFC_Pos);
+    NRF_UART0->ENABLE = (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos);
+    NRF_UART0->CONFIG |= (UART_CONFIG_PARITY_Msk << UART_CONFIG_PARITY_Pos);
     NRF_UART0->TASKS_STARTTX = 1;
     NRF_UART0->TASKS_STARTRX = 1;
     return;
 }
 
 
-void send_byte(char c) {
-    NRF_UART0->TXD = (uint8_t) c;
-    while (NRF_UART0->EVENTS_TXDRDY != 1) {}
+void simple_uart_put(uint8_t cr) {
+    NRF_UART0->TXD = (uint8_t) cr;
+
+    while (NRF_UART0->EVENTS_TXDRDY != 1) {
+        // Wait for TXD data to be sent
+    }
+
     NRF_UART0->EVENTS_TXDRDY = 0;
 }
 
-int puts(const char *__str) {
-    int i = 0;
-    while (__str[i]) {
-        send_byte(__str[i]);
-        i++;
+void simple_uart_putstring(const uint8_t *str) {
+    uint_fast8_t i = 0;
+    uint8_t ch = str[i++];
+    while (ch != '\0') {
+        simple_uart_put(ch);
+        ch = str[i++];
     }
-    return 1;
 }
 
 
@@ -67,8 +72,11 @@ int main(void) {
     UART_init();
     while (1) {
         nrf_delay_ms(1000);
-        puts("Hello");
+        simple_uart_putstring((const uint8_t *)"\n\rMPU9150 Initialize success\n\r");
+        printf("ACC:  %d	%d	%d	", 25, 255, 28);
+        NRF_P0->DIRSET = (1 << 22);
         nrf_delay_ms(1000);
+        NRF_P0->DIRCLR = (1 << 22);
     }
 }
 
