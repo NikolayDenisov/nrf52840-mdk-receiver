@@ -23,8 +23,8 @@ void uart_init(void) {
     NRF_P0->DIRCLR = (1 << 20); /*! TXD Output */
     NRF_UART0->PSEL.RXD = 19;
     NRF_UART0->PSEL.TXD = 20;
-    NRF_UART0->PSEL.CTS = 0xFFFFFFFF;
-    NRF_UART0->PSEL.RTS = 0xFFFFFFFF;
+    NRF_UART0->PSEL.CTS = 0xFFFFFFFF; /**< Value indicating that no pin is connected to this UART register. */
+    NRF_UART0->PSEL.RTS = 0xFFFFFFFF;/**< Value indicating that no pin is connected to this UART register. */
     NRF_UART0->CONFIG = (UART_CONFIG_PARITY_Excluded << UART_CONFIG_PARITY_Pos |
                          UART_CONFIG_HWFC_Disabled << UART_CONFIG_HWFC_Pos |
                          UART_CONFIG_STOP_One << UART_CONFIG_STOP_Pos);
