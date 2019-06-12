@@ -56,11 +56,8 @@ int main(void) {
     nrf_delay_ms(300);
     uart_init();
     while (1) {
-        nrf_delay_ms(1000);
         uart_put_string((const uint8_t *) "UART debug\r\n");
-        NRF_P0->DIRSET = (1 << 22);
         nrf_delay_ms(1000);
-        NRF_P0->DIRCLR = (1 << 22);
     }
 }
 
