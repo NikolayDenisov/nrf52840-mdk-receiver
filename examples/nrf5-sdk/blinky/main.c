@@ -1,9 +1,12 @@
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include "nrf52840.h"
 #include "nrf52840_bitfields.h"
 #include "nrf_delay.h"
+
 
 void clock_initialization() {
     /* Start 32 MHz crystal oscillator */
@@ -16,48 +19,31 @@ void clock_initialization() {
     }
 }
 
-void uart_init(void) {
-    /*Initialize the UART peripheral */
-    NRF_UART0->BAUDRATE = UART_BAUDRATE_BAUDRATE_Baud115200;
-    NRF_P0->DIRSET = (1 << 19); /*! RXD Input */
-    NRF_P0->DIRCLR = (1 << 20); /*! TXD Output */
-    NRF_UART0->PSEL.RXD = 19;
-    NRF_UART0->PSEL.TXD = 20;
-    NRF_UART0->PSEL.CTS = 0xFFFFFFFF; /**< Value indicating that no pin is connected to this UART register. */
-    NRF_UART0->PSEL.RTS = 0xFFFFFFFF;/**< Value indicating that no pin is connected to this UART register. */
-    NRF_UART0->CONFIG = (UART_CONFIG_PARITY_Excluded << UART_CONFIG_PARITY_Pos |
-                         UART_CONFIG_HWFC_Disabled << UART_CONFIG_HWFC_Pos |
-                         UART_CONFIG_STOP_One << UART_CONFIG_STOP_Pos);
-    NRF_UART0->ENABLE = (UART_ENABLE_ENABLE_Enabled << UART_ENABLE_ENABLE_Pos);
-    NRF_UART0->TASKS_STARTTX = 1;
-}
+uint16_t pwm_seq[4] = {5000, 8000, 12000, 15000};
 
 
-void simple_uart_put(uint8_t cr) {
-    NRF_UART0->TXD = (uint8_t) cr;
-    while (NRF_UART0->EVENTS_TXDRDY != 1) {
-        // Wait for TXD data to be sent
-    }
-    NRF_UART0->EVENTS_TXDRDY = 0;
-}
-
-void uart_put_string(const uint8_t *str) {
-    uint_fast8_t i = 0;
-    uint8_t ch = str[i++];
-    while (ch != '\0') {
-        simple_uart_put(ch);
-        ch = str[i++];
-    }
+void init_pwm(void) {
+    NRF_PWM0->PSEL.OUT[0] = (22 << PWM_PSEL_OUT_PIN_Pos) | (PWM_PSEL_OUT_CONNECT_Connected
+            << PWM_PSEL_OUT_CONNECT_Pos); /**Output pin select for PWM channel 0**/
+    NRF_PWM0->ENABLE = 1;
+    NRF_PWM0->MODE = (PWM_MODE_UPDOWN_Up << PWM_MODE_UPDOWN_Pos); /**Selects operating mode UpAndDown**/
+    NRF_PWM0->PRESCALER = (PWM_PRESCALER_PRESCALER_DIV_1
+            << PWM_PRESCALER_PRESCALER_Pos); /**Configuration for PWM_CLK 16 MHz**/
+    NRF_PWM0->COUNTERTOP = (16000<< PWM_COUNTERTOP_COUNTERTOP_Pos); /** Value up to which the pulse generator counter counts 1ms**/
+    NRF_PWM0->LOOP = (1 << PWM_LOOP_CNT_Pos); /**Number of playbacks of a loop**/
+    NRF_PWM0->DECODER = (PWM_DECODER_LOAD_Individual << PWM_DECODER_LOAD_Pos |
+                         PWM_DECODER_MODE_RefreshCount << PWM_DECODER_LOAD_Pos);
+    NRF_PWM0->SEQ[0].PTR = ((uint32_t) (pwm_seq)
+            << PWM_SEQ_PTR_PTR_Pos); /**Beginning address in RAM of this sequence**/
+    NRF_PWM0->SEQ[0].CNT = ((sizeof(pwm_seq) / sizeof(uint16_t))
+            << PWM_SEQ_CNT_CNT_Pos); /**Number of values (duty cycles) in this sequence**/
+    NRF_PWM0->SEQ[0].REFRESH = 1000; /**Number of additional PWM periods between samples loaded into compare register**/
+    NRF_PWM0->SEQ[0].ENDDELAY = 0; /**Time added after the sequence**/
+    NRF_PWM0->TASKS_SEQSTART[0] = 1; /**Loads the first PWM value on all enabled channels from sequence 0,**/
 }
 
 
 int main(void) {
     clock_initialization();
-    nrf_delay_ms(300);
-    uart_init();
-    while (1) {
-        uart_put_string((const uint8_t *) "UART debug\r\n");
-        nrf_delay_ms(1000);
-    }
+    init_pwm();
 }
-

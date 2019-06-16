@@ -1,0 +1,1 @@
+/usr/bin/cc -undef -D__GNUC__ -g   CMakeFiles/blinky.dir/main.c.o CMakeFiles/blinky.dir/home/nick/projects/nrf52840-mdk/nrf_sdks/nRF5_SDK_15.3.0_59ac345/modules/nrfx/mdk/system_nrf52840.c.o  -o blinky 
