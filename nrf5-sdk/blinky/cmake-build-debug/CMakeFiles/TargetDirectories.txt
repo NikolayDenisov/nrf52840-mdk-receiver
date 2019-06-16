@@ -1,5 +1,0 @@
-/home/nick/projects/nrf52840-mdk/examples/nrf5-sdk/blinky/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/nick/projects/nrf52840-mdk/examples/nrf5-sdk/blinky/cmake-build-debug/CMakeFiles/flash.dir
-/home/nick/projects/nrf52840-mdk/examples/nrf5-sdk/blinky/cmake-build-debug/CMakeFiles/blinky.dir
-/home/nick/projects/nrf52840-mdk/examples/nrf5-sdk/blinky/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/nick/projects/nrf52840-mdk/examples/nrf5-sdk/blinky/cmake-build-debug/CMakeFiles/erase.dir
