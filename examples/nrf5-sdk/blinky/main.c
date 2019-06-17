@@ -86,7 +86,7 @@ int main(void) {
     clock_initialization();
     uart_init();
     uart_put_string((const uint8_t *) "Start RTC example\r\n");
-    NVIC_EnableIRQ(RTC0_IRQn); // Enable Interrupt for the RTC in the core.
+    NVIC_EnableIRQ(RTC0_IRQn); /** Enable Interrupt for the RTC in the core.**/
     NRF_RTC0->PRESCALER = COUNTER_PRESCALER; /**12 bit prescaler for COUNTER frequency**/
     NRF_RTC0->CC[0] = COMPARE_COUNTERTIME * RTC_FREQUENCY;
     NRF_RTC0->EVTENSET = RTC_EVTENSET_TICK_Msk; /**Enable event routing**/
@@ -105,6 +105,5 @@ int main(void) {
         sprintf(s2, "CC value=%ld\r\n", cur_cc);
         uart_put_string((const uint8_t *) s1);
         uart_put_string((const uint8_t *) s2);
-//        nrf_delay_ms(2000);
     }
 }
