@@ -67,12 +67,26 @@ void uart_put_string(const uint8_t *str) {
     }
 }
 
+void RTC0_IRQHandler() {
+    uart_put_string((const uint8_t *) "IRQ debug\r\n");
+    if ((NRF_RTC0->EVENTS_TICK != 0) &&
+        ((NRF_RTC0->INTENSET & RTC_INTENSET_TICK_Msk) != 0)) {
+        NRF_RTC0->EVENTS_TICK = 0;
+    }
+
+    if ((NRF_RTC0->EVENTS_COMPARE[0] != 0) &&
+        ((NRF_RTC0->INTENSET & RTC_INTENSET_COMPARE0_Msk) != 0)) {
+        NRF_RTC0->EVENTS_COMPARE[0] = 0;
+    }
+}
+
 int main(void) {
     uint32_t counter;
     uint32_t cur_cc;
     clock_initialization();
     uart_init();
     uart_put_string((const uint8_t *) "Start RTC example\r\n");
+    NVIC_EnableIRQ(RTC0_IRQn); // Enable Interrupt for the RTC in the core.
     NRF_RTC0->PRESCALER = COUNTER_PRESCALER; /**12 bit prescaler for COUNTER frequency**/
     NRF_RTC0->CC[0] = COMPARE_COUNTERTIME * RTC_FREQUENCY;
     NRF_RTC0->EVTENSET = RTC_EVTENSET_TICK_Msk; /**Enable event routing**/
@@ -84,7 +98,7 @@ int main(void) {
         cur_cc = NRF_RTC0->CC[0];
         uart_put_string((const uint8_t *) "Read Counter\r\n");
         nrf_delay_ms(2000);
-//        __WFI();
+        __WFI();
         char s1[40];
         char s2[40];
         sprintf(s1, "Counter value=%ld\r\n", counter);
