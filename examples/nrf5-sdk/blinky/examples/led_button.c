@@ -19,7 +19,7 @@ void button_init(void) {
 int main(void) {
     button_init();
     while (1) {
-        if (!NRF_P1->IN & (1 << 0)) {
+        if (!NRF_P1->IN) {
             led_on();
             nrf_delay_ms(1000);
             led_off();

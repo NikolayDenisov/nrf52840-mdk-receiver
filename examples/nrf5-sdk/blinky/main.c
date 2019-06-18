@@ -9,12 +9,6 @@
 #include "nrf_delay.h"
 
 
-#define LFCLK_FREQUENCY           (32768UL)                               /**< LFCLK*/
-#define RTC_FREQUENCY             (8UL)                                   /**<RTC_FREQUENCY */
-#define COMPARE_COUNTERTIME       (3UL)                                   /**< Get Compare event COMPARE_TIME seconds after the counter starts from 0. */
-#define COUNTER_PRESCALER ((LFCLK_FREQUENCY/RTC_FREQUENCY) - 1) /** f = LFCLK/(prescaler + 1) **/
-
-
 void clock_initialization() {
     /* Start 32 MHz crystal oscillator */
     NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
@@ -31,6 +25,14 @@ void clock_initialization() {
     while (NRF_CLOCK->EVENTS_LFCLKSTARTED == 0) {
     }
     NRF_CLOCK->EVENTS_LFCLKSTARTED = 0;
+}
+
+void led_on(void) {
+    NRF_P0->DIRSET = (1 << 22);
+}
+
+void led_off(void) {
+    NRF_P0->DIRCLR = (1 << 22);
 }
 
 void uart_init(void) {
@@ -67,43 +69,32 @@ void uart_put_string(const uint8_t *str) {
     }
 }
 
-void RTC0_IRQHandler() {
-    uart_put_string((const uint8_t *) "IRQ debug\r\n");
-    if ((NRF_RTC0->EVENTS_TICK != 0) &&
-        ((NRF_RTC0->INTENSET & RTC_INTENSET_TICK_Msk) != 0)) {
-        NRF_RTC0->EVENTS_TICK = 0;
-    }
+void GPIOTE_IRQHandler(void) {
+    uart_put_string((const uint8_t *) "IRQHandler\r\n");
+    led_on();
+    nrf_delay_ms(1000);
+    led_off();
+    NRF_GPIOTE->INTENCLR = 0x20;
+}
 
-    if ((NRF_RTC0->EVENTS_COMPARE[0] != 0) &&
-        ((NRF_RTC0->INTENSET & RTC_INTENSET_COMPARE0_Msk) != 0)) {
-        NRF_RTC0->EVENTS_COMPARE[0] = 0;
-    }
+void button_init(void) {
+    uart_put_string((const uint8_t *) "BUTTON init\r\n");
+    NRF_P1->PIN_CNF[0] = (GPIO_PIN_CNF_INPUT_Connect << GPIO_PIN_CNF_INPUT_Pos) |
+                         (GPIO_PIN_CNF_SENSE_Low << GPIO_PIN_CNF_SENSE_Pos) |
+                         (GPIO_PIN_CNF_PULL_Pullup << GPIO_PIN_CNF_PULL_Pos);
+    NRF_GPIOTE->INTENSET = 0x20;
+    NVIC_EnableIRQ(GPIOTE_IRQn);
+
 }
 
 int main(void) {
-    uint32_t counter;
-    uint32_t cur_cc;
     clock_initialization();
     uart_init();
-    uart_put_string((const uint8_t *) "Start RTC example\r\n");
-    NVIC_EnableIRQ(RTC0_IRQn); /** Enable Interrupt for the RTC in the core.**/
-    NRF_RTC0->PRESCALER = COUNTER_PRESCALER; /**12 bit prescaler for COUNTER frequency**/
-    NRF_RTC0->CC[0] = COMPARE_COUNTERTIME * RTC_FREQUENCY;
-    NRF_RTC0->EVTENSET = RTC_EVTENSET_TICK_Msk; /**Enable event routing**/
-    NRF_RTC0->INTENSET = RTC_INTENSET_TICK_Msk; /**Enable interrupt**/
-    NRF_RTC0->EVENTS_COMPARE[0] = 0; /**Compare register 0**/
-    NRF_RTC0->TASKS_START = 1; /**Start RTC COUNTER**/
-    while (true) {
-        counter = NRF_RTC0->COUNTER;
-        cur_cc = NRF_RTC0->CC[0];
-        uart_put_string((const uint8_t *) "Read Counter\r\n");
-        nrf_delay_ms(2000);
+    button_init();
+    uart_put_string((const uint8_t *) "Wait interrupt\r\n");
+    while (1) {
+        uart_put_string((const uint8_t *) "BEFORE interrupt\r\n");
         __WFI();
-        char s1[40];
-        char s2[40];
-        sprintf(s1, "Counter value=%ld\r\n", counter);
-        sprintf(s2, "CC value=%ld\r\n", cur_cc);
-        uart_put_string((const uint8_t *) s1);
-        uart_put_string((const uint8_t *) s2);
+        uart_put_string((const uint8_t *) "AFTER interrupt\r\n");
     }
 }
