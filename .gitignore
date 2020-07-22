@@ -4,6 +4,8 @@ nrf_sdks/*
 .DS_Store
 _build
 build
+cmake-build-debug
+nRF5_SDK_17
 
 BUILD/
 mbed-os/
