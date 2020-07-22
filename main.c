@@ -30,6 +30,8 @@ void send_packet() {
         // wait
     }
 
+    bsp_board_led_invert(0);
+    nrf_delay_ms(10);
     NRF_LOG_INFO("The packet was sent");
     NRF_RADIO->EVENTS_DISABLED = 0U;
     NRF_RADIO->TASKS_DISABLE = 1U;
