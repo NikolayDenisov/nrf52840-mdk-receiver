@@ -18,27 +18,33 @@
 
 static uint32_t packet;
 
-void send_packet() {
+uint32_t read_packet() {
+    uint32_t result = 0;
     NRF_RADIO->EVENTS_READY = 0U;
-    NRF_RADIO->TASKS_TXEN = 1;
+    // Enable radio and wait for ready
+    NRF_RADIO->TASKS_RXEN = 1U;
     while (NRF_RADIO->EVENTS_READY == 0U) {
         // wait
     }
     NRF_RADIO->EVENTS_END = 0U;
+    // Start listening and wait for address received event
     NRF_RADIO->TASKS_START = 1U;
+    // Wait for end of packet or buttons state changed
     while (NRF_RADIO->EVENTS_END == 0U) {
         // wait
     }
-
-    bsp_board_led_invert(0);
-    nrf_delay_ms(10);
-    NRF_LOG_INFO("The packet was sent");
+    if (NRF_RADIO->CRCSTATUS == 1U) {
+        result = packet;
+    }
     NRF_RADIO->EVENTS_DISABLED = 0U;
+    // Disable radio
     NRF_RADIO->TASKS_DISABLE = 1U;
     while (NRF_RADIO->EVENTS_DISABLED == 0U) {
         // wait
     }
+    return result;
 }
+
 
 void clock_initialization() {
     NRF_CLOCK->EVENTS_HFCLKSTARTED = 0;
@@ -61,13 +67,17 @@ int main(void) {
     err_code = NRF_LOG_INIT(NULL);
     APP_ERROR_CHECK(err_code);
     NRF_LOG_DEFAULT_BACKENDS_INIT();
-    NRF_LOG_INFO("TRANSMITTER\n");
-    bsp_board_init(BSP_INIT_LEDS | BSP_INIT_BUTTONS);
+    NRF_LOG_INFO("receiver\n");
+    bsp_board_init(BSP_INIT_LEDS);
     radio_configure();
     NRF_RADIO->PACKETPTR = (uint32_t) &packet;
+    NRF_LOG_INFO("Radio receiver example started.");
+    NRF_LOG_INFO("Wait for first packet");
+    NRF_LOG_FLUSH();
     while (true) {
-        send_packet();
-        NRF_LOG_INFO("The contents of the package was %u", (unsigned int) packet);
-        nrf_delay_ms(1000);
+        uint32_t received = read_packet();
+        NRF_LOG_INFO("Packet was received");
+        NRF_LOG_INFO("The contents of the package is %u", (unsigned int) received);
+        NRF_LOG_FLUSH();
     }
 }

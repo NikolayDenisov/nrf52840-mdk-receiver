@@ -2,7 +2,7 @@ PROJECT_NAME     := project_nrf52840_mdk
 TARGETS          := nrf52840_xxaa
 OUTPUT_DIRECTORY := _build
 
-MDK_ROOT := /home/nick/nrf52840-mdk-transmitter
+MDK_ROOT := /home/nick/nrf52840-mdk-receiver
 SDK_ROOT := $(MDK_ROOT)/nRF5_SDK_17
 PROJ_DIR := $(MDK_ROOT)
 

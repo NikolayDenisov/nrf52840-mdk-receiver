@@ -1,4 +1,4 @@
-# nrf52840-mdk-transmitter
+# nrf52840-mdk-receiver
 
 Description
 
